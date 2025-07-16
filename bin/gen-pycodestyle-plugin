@@ -26,7 +26,10 @@ class Call(NamedTuple):
     def to_src(self) -> str:
         params_s = ", ".join(self.params)
         if self.is_generator:
-            return _too_long(f"    yield from _{self.name}({params_s})")
+            return _too_long(
+                 "    start = time.perf_counter_ns()\n"
+                f"    yield from _{self.name}({params_s})  # noqa: E501\n"
+                f"    execution_times['{self.name}'].append(time.perf_counter_ns() - start)  # noqa: E501")
         else:
             lines = (
                 _too_long(f"    ret = _{self.name}({params_s})"),
@@ -58,12 +61,17 @@ def lines() -> Generator[str]:
     yield "# fmt: off"
     yield "from __future__ import annotations"
     yield ""
+    yield "import time"
+    yield "from collections import defaultdict"
     yield "from collections.abc import Generator"
     yield "from typing import Any"
     yield ""
     imports = sorted(call.name for call in logical + physical)
     for name in imports:
         yield _too_long(f"from pycodestyle import {name} as _{name}")
+    yield ""
+    yield ""
+    yield "execution_times = defaultdict(list)"
     yield ""
     yield ""
 

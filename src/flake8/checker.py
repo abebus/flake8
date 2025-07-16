@@ -339,7 +339,17 @@ class FileChecker:
                 plugin_name=plugin.display_name, exception=ae
             )
         try:
-            return plugin.obj(**arguments, **params)
+            exc = None
+            ret = None
+            for _ in range(1000):
+                try:
+                    ret = plugin.obj(**arguments, **params)
+                except Exception as exc:
+                    exc = exc
+            if exc: 
+                raise exc
+            if ret:
+                return ret
         except Exception as all_exc:
             LOG.critical(
                 "Plugin %s raised an unexpected exception",
